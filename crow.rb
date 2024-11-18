@@ -23,8 +23,11 @@ bot.command :play do |event, file|
         end
     end
 
-    bot.send_message(bot_channel, "caw! now playing #{file}")
-    voice_bot.play_file("albums/#{file}.mp3")
+    files = Dir.glob("albums/#{file}/**/*.mp3")
+    files.each do |f|
+        bot.send_message(bot_channel, "caw! now playing #{f}")
+        voice_bot.play_file(f)
+    end
 end
 
 bot.command :pause do |event|
