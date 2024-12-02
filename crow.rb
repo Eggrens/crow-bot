@@ -14,6 +14,7 @@ def play_queue(voice_bot, bot)
         bot.update_status("online", f, nil, 0, false, 2)
         voice_bot.play_file(f)
     end
+    bot.update_status("online", nil, nil)
     "caw! finished playing"
 end
 
@@ -53,6 +54,13 @@ bot.command(:queue, description: "prints the current queue") do |event|
     list << "```"
 end
 
+bot.command(:shuffle, description: "shuffles the queue") do |event|
+    next "caw! queue is empty" if @queue.empty?
+
+    @queue = @queue.shuffle
+    "caw! queue shuffled :>"
+end
+
 bot.command(:play, description: "play a given file / continue playback") do |event, file|
     voice_bot = event.voice
     if file == nil
@@ -74,7 +82,7 @@ bot.command(:play, description: "play a given file / continue playback") do |eve
     play_queue(voice_bot, bot) unless voice_bot.playing?
 end
 
-bot.command(:playalbum, description: "play all music files in an album folder") do |event, album|
+bot.command(:playalbum, description: "play all music files in an album folder; add \"shuffle\" after album folder if you want it shuffled first") do |event, album, shuffle|
     voice_bot = event.voice
 
     next "album #{album} not found..." unless Dir.exist?("albums/#{album}")
@@ -82,6 +90,10 @@ bot.command(:playalbum, description: "play all music files in an album folder") 
     files = Dir.glob("albums/#{album}/**/*.{mp3,flac,wav}")
     files.each do |f|
         @queue << f
+    end
+
+    if shuffle == "shuffle"
+        @queue = @queue.shuffle
     end
 
     bot.send_message(bot_channel, "caw! added album #{album} to the queue")
