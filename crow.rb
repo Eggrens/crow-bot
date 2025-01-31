@@ -2,7 +2,19 @@ require 'discordrb'
 require 'dotenv'
 Dotenv.load
 
-bot = Discordrb::Commands::CommandBot.new token: ENV['CROW_TOKEN'], prefix: '~'
+env_log = ENV['CROW_LOGGING']
+case env_log
+when 'debug'
+    log_mode = :debug
+when 'verbose'
+    log_mode = :verbose
+when 'quiet'
+    log_mode = :quiet
+else
+    log_mode = :normal
+end
+
+bot = Discordrb::Commands::CommandBot.new log_mode: log_mode, token: ENV['CROW_TOKEN'], prefix: ENV['CROW_PREFIX']
 bot_channel = ENV['CHANNEL_ID']
 
 @queue = []
@@ -61,19 +73,23 @@ bot.command(:shuffle, description: "shuffles the queue") do |event|
     "caw! queue shuffled :>"
 end
 
-bot.command(:play, description: "play a given file / continue playback") do |event, file|
+bot.command(:play, description: "play a given file / continue playback") do |event, *filename|
     voice_bot = event.voice
-    if file == nil
+    next "i'm not connected to a channel! (use connect command)" unless voice_bot
+
+    if filename.empty?
         if voice_bot.playing?
             voice_bot.continue
             return "continued playback"
         else
-            return "hey, don't do that!!"
+            return "there's nothing in the queue to play!"
         end
     end
 
+    file = filename.join(" ")
+
     next "#{file} not found..." unless File.exist?(file)
-    next "#{file} is a directory, dummy" unless !File.directory?(file)
+    next "#{file} is a directory..." unless !File.directory?(file)
     next "#{file} does not have .mp3/.flac/.wav extension!" unless FORMATS.include? File.extname(file)
 
     @queue << file
@@ -106,7 +122,7 @@ bot.command(:pause, description: "pause current song") do |event|
         voice_bot.pause
         "caw! paused"
     else
-        "hey! don't do that"
+        "but i'm not playing anything..."
     end
 end
 
@@ -116,6 +132,8 @@ bot.command(:stop, description: "clears the queue and stops playback") do |event
         @queue.clear
         voice_bot.stop_playing
         "caw! cleared the queue"
+    else
+	"but i'm not playing anything..."
     end
 end
 
@@ -124,15 +142,17 @@ bot.command(:skip, description: "skip to the next song in queue") do |event|
     if voice_bot.playing?
         voice_bot.stop_playing
         "caw! skipped"
+    else
+	"but i'm not playing anything..."
     end
 end
 
 bot.command(:disconnect, description: "disconnect Crow from the voice channel") do |event|
     channel = event.user.voice_channel
-    next "caw! not in a voice channel dummy" unless channel
+    next "caw! not in a voice channel" unless channel
     voice_bot = event.voice
     voice_bot.destroy
-    "disconnected from #{channel}"
+    "disconnected from #{channel.name}"
 end
 
 bot.command(:quit, description: "shuts down Crow") do |event|
