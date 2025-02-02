@@ -2,6 +2,8 @@ require 'discordrb'
 require 'dotenv'
 Dotenv.load
 
+Dotenv.require_keys("CROW_TOKEN", "CHANNEL_ID", "CROW_PREFIX")
+
 env_log = ENV['CROW_LOGGING']
 case env_log
 when 'debug'
@@ -30,13 +32,29 @@ def play_queue(voice_bot, bot)
     "caw! finished playing"
 end
 
+def trim_quotes(s)
+    if s[0] == '"'
+        s = s.delete_prefix('"')
+    elsif s[0] == "'"
+        s = s.delete_prefix("'")
+    end
+
+    if s[-1] == '"'
+        s = s.delete_suffix('"')
+    elsif s[-1] == "'"
+        s = s.delete_suffix("'")
+    end
+
+    return s
+end
+
 bot.command(:mew, description: "mew") do |event|
     "mew! :>"
 end
 
 bot.command(:connect, description: "connect Crow to the voice channel") do |event|
     channel = event.user.voice_channel
-    next "caw! not in a voice channel dummy" unless channel
+    next "caw! you're not in a voice channel" unless channel
     bot.voice_connect(channel)
     "caw! connected to: #{channel.name}"
 end
@@ -75,7 +93,7 @@ end
 
 bot.command(:play, description: "play a given file / continue playback") do |event, *filename|
     voice_bot = event.voice
-    next "i'm not connected to a channel! (use connect command)" unless voice_bot
+    next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
     if filename.empty?
         if voice_bot.playing?
@@ -86,20 +104,31 @@ bot.command(:play, description: "play a given file / continue playback") do |eve
         end
     end
 
-    file = filename.join(" ")
+    file = trim_quotes(filename.join(" "))
 
     next "#{file} not found..." unless File.exist?(file)
     next "#{file} is a directory..." unless !File.directory?(file)
     next "#{file} does not have .mp3/.flac/.wav extension!" unless FORMATS.include? File.extname(file)
 
     @queue << file
-    bot.send_message(bot_channel, "Added #{file} to the queue")
+    bot.send_message(bot_channel, "caw! added #{file} to the queue")
 
     play_queue(voice_bot, bot) unless voice_bot.playing?
 end
 
-bot.command(:playalbum, description: "play all music files in an album folder; add \"shuffle\" after album folder if you want it shuffled first") do |event, album, shuffle|
+bot.command(:playalbum, description: "play all music files in an album folder; add '-s' if you want it shuffled first") do |event, arg1, arg2|
     voice_bot = event.voice
+    shuffle = false
+
+    if arg1 == "-s"
+        album = arg2
+        shuffle = true
+    elsif arg2 == "-s"
+        album = arg1
+        shuffle = true
+    else
+        album = arg1
+    end
 
     next "album #{album} not found..." unless Dir.exist?("albums/#{album}")
 
@@ -108,10 +137,10 @@ bot.command(:playalbum, description: "play all music files in an album folder; a
         @queue << f
     end
 
-    if shuffle == "shuffle"
+    if shuffle
         @queue = @queue.shuffle
     end
-
+    bot.send_message(bot_channel, "shuffling #{album}") if shuffle
     bot.send_message(bot_channel, "caw! added album #{album} to the queue")
     play_queue(voice_bot, bot) unless voice_bot.playing?
 end
@@ -133,7 +162,7 @@ bot.command(:stop, description: "clears the queue and stops playback") do |event
         voice_bot.stop_playing
         "caw! cleared the queue"
     else
-	"but i'm not playing anything..."
+	    "but i'm not playing anything..."
     end
 end
 
@@ -143,7 +172,7 @@ bot.command(:skip, description: "skip to the next song in queue") do |event|
         voice_bot.stop_playing
         "caw! skipped"
     else
-	"but i'm not playing anything..."
+	    "but i'm not playing anything..."
     end
 end
 
