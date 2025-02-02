@@ -2,6 +2,8 @@ require 'discordrb'
 require 'dotenv'
 Dotenv.load
 
+Dotenv.require_keys("CROW_TOKEN", "CHANNEL_ID", "CROW_PREFIX")
+
 env_log = ENV['CROW_LOGGING']
 case env_log
 when 'debug'
@@ -28,6 +30,22 @@ def play_queue(voice_bot, bot)
     end
     bot.update_status("online", nil, nil)
     "caw! finished playing"
+end
+
+def trim_quotes(s)
+    if s[0] == '"'
+        s = s.delete_prefix('"')
+    elsif s[0] == "'"
+        s = s.delete_prefix("'")
+    end
+
+    if s[-1] == '"'
+        s = s.delete_suffix('"')
+    elsif s[-1] == "'"
+        s = s.delete_suffix("'")
+    end
+
+    return s
 end
 
 bot.command(:mew, description: "mew") do |event|
@@ -86,7 +104,7 @@ bot.command(:play, description: "play a given file / continue playback") do |eve
         end
     end
 
-    file = filename.join(" ")
+    file = trim_quotes(filename.join(" "))
 
     next "#{file} not found..." unless File.exist?(file)
     next "#{file} is a directory..." unless !File.directory?(file)
