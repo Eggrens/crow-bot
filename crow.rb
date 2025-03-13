@@ -262,20 +262,20 @@ bot.command(:stop, description: "clears the queue and stops playback", max_args:
     end
 end
 
-bot.command(:skip, description: "skip to the next song in queue", max_args: 0) do |event|
+bot.command(:next, description: "move to the next song in queue", max_args: 0) do |event|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
     if voice_bot.playing?
         voice_bot.stop_playing
-        "caw! skipped song"
+        "caw! skipped to the next song"
     else
 	    "but i'm not playing anything..."
     end
 end
 
-bot.command(:seek, min_args: 1, max_args: 1, description: "seek to a later timecode in the current song being played",
-usage: "seek [H:MM:SS or M:SS]") do |event, time|
+bot.command(:seek, min_args: 1, max_args: 1, description: "skip to a later timecode in the current song being played",
+usage: "seek [H:MM:SS or M:SS]", aliases: [:skip]) do |event, time|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
     next "but i'm not playing anything..." unless voice_bot.playing?

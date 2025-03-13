@@ -29,6 +29,7 @@ GEM
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 4.0)
       netrc (~> 0.8)
+    taglib-ruby (1.1.3)
     websocket (1.2.11)
     websocket-client-simple (0.8.0)
       event_emitter
@@ -40,6 +41,7 @@ PLATFORMS
 DEPENDENCIES
   discordrb
   dotenv
+  taglib-ruby (< 2.0)
 
 BUNDLED WITH
    2.5.23
