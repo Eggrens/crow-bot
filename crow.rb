@@ -96,6 +96,10 @@ def play_queue(voice_bot, bot)
     "caw! finished playing"
 end
 
+def playtime(voice_bot)
+    voice_bot.stream_time + @time_skipped
+end
+
 bot.command(:mew, description: "mew") do |event|
     "mew! :>"
 end
@@ -150,10 +154,11 @@ end
 
 bot.command(:nowplaying, description: "lists the current song being played", aliases: [:np]) do |event|
     next "caw! no song is being played" unless @current_song
+    voice_bot = event.voice
 
     event << "Playing:"
     event << "**#{@current_song.to_s}**"
-    event << "`#{convert_to_time(event.voice.stream_time + @time_skipped)} / #{convert_to_time(@current_song.length)}`"
+    event << "`#{convert_to_time(playtime(voice_bot))} / #{convert_to_time(@current_song.length)}`"
 end
 
 bot.command(:queue, description: "prints the current queue", aliases: [:q]) do |event|
@@ -232,7 +237,7 @@ bot.command(:playalbum, min_args: 1, max_args: 2, description: "play all music f
     play_queue(voice_bot, bot) unless voice_bot.playing?
 end
 
-bot.command(:pause, description: "pause current song") do |event|
+bot.command(:pause, description: "pause current song", max_args: 0) do |event|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
@@ -244,7 +249,7 @@ bot.command(:pause, description: "pause current song") do |event|
     end
 end
 
-bot.command(:stop, description: "clears the queue and stops playback") do |event|
+bot.command(:stop, description: "clears the queue and stops playback", max_args: 0) do |event|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
@@ -257,7 +262,7 @@ bot.command(:stop, description: "clears the queue and stops playback") do |event
     end
 end
 
-bot.command(:skip, description: "skip to the next song in queue") do |event|
+bot.command(:skip, description: "skip to the next song in queue", max_args: 0) do |event|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
@@ -280,14 +285,15 @@ usage: "seek [H:MM:SS or M:SS]") do |event, time|
 
     secs = convert_to_secs(time)
     next "timecode out of bounds!" if secs > @current_song.length
-    next "timecode has been passed already (cannot go back in time)" if secs <= (voice_bot.stream_time + @time_skipped)
+    next "timecode has been passed already (cannot go back in time)" if secs <= playtime(voice_bot)
 
-    @time_skipped += secs - voice_bot.stream_time
-    voice_bot.skip(secs)
+    offset = secs - playtime(voice_bot)
+    @time_skipped = secs - voice_bot.stream_time
+    voice_bot.skip(offset)
     "caw! skipped to `#{convert_to_time(secs)} / #{convert_to_time(@current_song.length)}`"
 end
 
-bot.command(:disconnect, description: "disconnect Crow from the voice channel") do |event|
+bot.command(:disconnect, description: "disconnect Crow from the voice channel", max_args: 0) do |event|
     channel = event.user.voice_channel
     next "caw! not in a voice channel" unless channel
     voice_bot = event.voice
@@ -296,7 +302,7 @@ bot.command(:disconnect, description: "disconnect Crow from the voice channel") 
 end
 
 # note: you may want to remove this command unless you absolutely trust whoever's using it :)
-bot.command(:quit, description: "shuts down Crow") do |event|
+bot.command(:quit, description: "shuts down Crow", max_args: 0) do |event|
     event.respond 'caw! shutting down'
     exit
 end
