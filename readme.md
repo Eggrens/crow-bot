@@ -62,7 +62,7 @@ You can also view what song Crow is currently playing with `~nowplaying` or `~np
 
 ![A screenshot of Crow displaying the current song with `nowplaying`](readme-imgs/crow-bot-scr1.png)
 
-You can pause playback with `~pause`, and continue playback with `~play`. Typing `~stop` will clear all songs in the queue. You can also seek to a specified timecode in the song by using `~seek [H:MM:SS or MM:SS]`, but note that Crow cannot go back in time (i.e. the timecode has already been passed).
+You can pause playback with `~pause`, and continue playback with `~play`. Typing `~stop` will clear all songs in the queue. You can also seek to a specified timecode in the song by using `~seek [H:MM:SS or MM:SS]` (or `~skip`), but note that Crow cannot go back in time (i.e. the timecode has already been passed).
 
 Typing `~help` will bring up a list of the available commands, and you can use `~help [command_name]` to get help for a specific command.
 
@@ -76,7 +76,7 @@ Other commands:
 
 ![A screenshot of Crow displaying the current song with `nowplaying`](readme-imgs/crow-bot-scr2.png)
 
-- `~skip` - skips to the next song in the queue
+- `~next` - moves to the next song in the queue
 - `~shuffle` - shuffles the order of songs currently in the queue
 - `~quit` - terminates the program
 - `~mew` - Crow says "mew!" :>
