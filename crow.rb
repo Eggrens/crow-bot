@@ -3,7 +3,9 @@ require 'dotenv'
 require 'taglib'
 Dotenv.load
 
-Dotenv.require_keys("CROW_TOKEN", "CROW_PREFIX")
+Dotenv.require_keys("CROW_TOKEN", "CROW_PREFIX", "CROW_ADMINS")
+
+admins = ENV['CROW_ADMINS'].split(',')
 
 case ENV['CROW_LOGGING']
 when 'debug'
@@ -89,7 +91,9 @@ def play_queue(voice_bot, bot)
         @time_skipped = 0
         # Set status to "Playing [songtitle] - [songartist]"
         bot.update_status("online", song.to_s, nil, 0, false, 2)
-        voice_bot.play_file(song.filename)
+        Thread.new {
+            voice_bot.play_file(song.filename)
+        }.join
     end
     @current_song = nil
     bot.update_status("online", nil, nil)
@@ -301,8 +305,9 @@ bot.command(:disconnect, description: "disconnect Crow from the voice channel", 
     "disconnected from #{channel.name}"
 end
 
-# note: you may want to remove this command unless you absolutely trust whoever's using it :)
 bot.command(:quit, description: "shuts down Crow", max_args: 0) do |event|
+    next "hey!! you're not authorized to use this command" unless admins.include? event.user.id.to_s
+
     event.respond 'caw! shutting down'
     exit
 end
