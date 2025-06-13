@@ -68,7 +68,7 @@ Typing `~help` will bring up a list of the available commands, and you can use `
 
 Other commands:
 - `~albums` - lists all albums in the `albums/` directory
-- `~list my-album` - lists all songs in an album in the `albums/` directory
+- `~list my-album` - lists all songs in an album in the `albums/` directory, as well as their lengths
 
 ![A screenshot of Crow displaying the current song with `nowplaying`](readme-imgs/crow-bot-scr3.png)
 
@@ -77,6 +77,7 @@ Other commands:
 ![A screenshot of Crow displaying the current song with `nowplaying`](readme-imgs/crow-bot-scr2.png)
 
 - `~next` - moves to the next song in the queue
+    - you can also give this an integer argument to move to a specific song in the queue (e.g. `~next 14` to move to the 14th song in queue)
 - `~shuffle` - shuffles the order of songs currently in the queue
 - `~quit` - terminates the program
 - `~mew` - Crow says "mew!" :>
