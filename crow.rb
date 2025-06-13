@@ -141,10 +141,12 @@ bot.command(:list, min_args: 1, max_args: 1, description: "list all music files 
 
         list = "```\nsongs in #{album}:\n"
         songs.each_with_index do |a, i|
-            entry = "\t#{a}\n"
-            if list.size + entry.size > 1978
-                list << "(and #{songs.length - i+1} more...)\n"
-                break
+            song = Song.new(a)
+            entry = "\t%8s | %s\n" % [convert_to_time(song.length), song.filename]
+            if list.size + entry.size > 1997    # if list size exceeds 1997 chars (need 3 chars for ```), break list into another part
+                list << "```"
+                event.respond list
+                list = "```\n#{entry}"
             else
                 list << entry
             end
@@ -171,9 +173,10 @@ bot.command(:queue, description: "prints the current queue", aliases: [:q]) do |
     list = "```\nqueue:\n"
     @queue.each_with_index do |q, i|
         entry = "\t%3d. | %8s | %s\n" % [i+1, convert_to_time(q.length), q.to_s]
-        if list.size + entry.size > 1978
-            list << "(and #{@queue.length - i+1} more...)\n"
-            break
+        if list.size + entry.size > 1997    # if list size exceeds 1997 chars (need 3 chars for ```), break list into another part
+            list << "```"
+            event.respond list
+            list = "```\n#{entry}"
         else
             list << entry
         end
@@ -193,7 +196,7 @@ bot.command(:play, max_args: 1, description: "play a given file / continue playb
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
 
-    unless file
+    unless file     # continue playback if no file specified
         if voice_bot.playing?
             voice_bot.continue
             return "continued playback"
@@ -266,13 +269,28 @@ bot.command(:stop, description: "clears the queue and stops playback", max_args:
     end
 end
 
-bot.command(:next, description: "move to the next song in queue", max_args: 0) do |event|
+bot.command(:next, description: "move to next song in queue, or specify a song number to move to", usage: "next [position #]", max_args: 1) do |event, i|
     voice_bot = event.voice
     next "i'm not connected to a voice channel! (use connect command)" unless voice_bot
+    next "caw! queue is empty" if @queue.empty?
+    pos = i.to_i
+
+    # return invalid if position defined, but not an integer
+    next "invalid position number: number must be an integer" if i && pos == 0
+
+    # return invalid if position is out of bounds
+    next "invalid position number: #{pos} is out of bounds" if i && (pos <= 0 || pos > @queue.length)
 
     if voice_bot.playing?
+        # skip shifting queue if pos # is 1 or 0 (i undefined)
+        unless pos <= 1
+            (pos - 1).times do
+                @queue.shift
+            end
+        end
+
+        event << "caw! skipping to **#{@queue.first.to_s}**"
         voice_bot.stop_playing
-        "caw! skipped to the next song"
     else
 	    "but i'm not playing anything..."
     end
